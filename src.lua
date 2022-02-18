@@ -1,3 +1,7 @@
+local newproxy = newproxy or function()return{}end;
+local spawn = task and task.spawn;
+local wrap = coroutine and coroutine.wrap;
+
 local EventHolders = {};
 local ConnectionHolders = {};
 local EventProperties = {
@@ -63,6 +67,9 @@ local function TypeOf(Object)
 	end;
 
 	return OG;
+end;
+local function SecureCall(func, ...)
+
 end;
 
 local function Connection__Index(Connection, Index)
@@ -210,7 +217,12 @@ local function EventFire(Event, ...)
 	if Event and TypeOf(Event) == 'Event' then
 		for I, Connection in next, Event.Connections do
 			if Connection and ConnectionHolders[Connection] and TypeOf(Connection) == 'Connection' and Connection.Active and Connection.Function then
-				local Success, Result = pcall(task.spawn, Connection.Function, ...);
+				local Success, Result;
+				if spawn then
+					Success, Result = pcall(spawn, Connection.Function, ...);
+				elseif wrap then
+					Success, Result = pcall(wrap(Connection.Function), ...);
+				end;
 
 				if not Success and Result then
 					return error('[EventFire, returned from calling Connection.Function]: ' .. tostring(Result));
@@ -225,7 +237,12 @@ local function EventDisconnectAll(Event)
 	if Event and TypeOf(Event) == 'Event' then
 		for I, Connection in next, Event.Connections do
 			if Connection and TypeOf(Connection) == 'Connection' and Connection.Disconnect then
-				local Success, Result = pcall(task.spawn, Connection.Disconnect, Connection)
+				local Success, Result;
+				if spawn then
+					Success, Result = pcall(spawn, Connection.Disconnect, Connection);
+				elseif wrap then
+					Success, Result = pcall(wrap(Connection.Disconnect), Connection);
+				end;
 
 				if not Success and Result then
 					return error('[EventDisconnectAll, returned from calling Connection.Disconnect]: ' .. tostring(Result));
@@ -265,4 +282,36 @@ local function CreateEvent(Info)
 	return Event;
 end;
 
-return CreateEvent;
+do --demonstration
+	local Event = CreateEvent{Name = 'Orangutan'};
+
+	local Connection1 = Event:Connect(function(Key, ...)
+		if Key == 'Key' then
+			print('Passed: ', ...);
+		else
+			print('Invalid key.');
+		end;
+	end);
+	Event:Fire('Key', 'Execute', 'Permission=true');
+	Event:Fire('bruh', 'Execute');
+	Connection1:Disconnect();
+	Event:Fire('Key', 'Clear', 'All');
+
+	Event:Connect(function(...)
+		print('Con1:', ...);
+	end);
+	Event:Connect(function(...)
+		print('Con2:', ...);
+	end);
+	Event:Connect(function(...)
+		print('Con3:', ...);
+	end);
+
+	Event:Fire('Push', 'Array1', 'Value6');
+	Event:Fire('Pop', 'Array2', 'Value5');
+
+	Event:DisconnectAll();
+
+	Event:Fire('Pull', 'Array2', 'Value3');
+	Event:Fire('Get', 'Array2', 'Value9');
+end;
