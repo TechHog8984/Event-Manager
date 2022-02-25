@@ -277,7 +277,7 @@ local function CreateEvent(Info)
 	MT.__newindex = Event__NewIndex;
 	MT.__tostring = Event__Tostring;
 
-	Event.Name = Info.Name or EventProperties.Name.default;
+	Event.Name = (Info and Info.Name) or EventProperties.Name.default;
 
 	return Event;
 end;
