@@ -20,15 +20,15 @@ local EventProperties = {
 		type = 'string',
 	},
 	Connect = {
-		readonly = false,
+		readonly = true,
 		type = 'function',
 	},
 	Fire = {
-		readonly = false,
+		readonly = true,
 		type = 'function',
 	},
 	DisconnectAll = {
-		readonly = false,
+		readonly = true,
 		type = 'function',
 	},
 };
